@@ -17,20 +17,28 @@ body {
 }
 
 #url-input {
-    width: 70%;
+    width: 60%;
     padding: 10px;
     border-radius: 5px;
     border: none;
+    font-size: 16px;
 }
 
-#go-button {
+#go-button, #fullscreen-button {
     padding: 10px 20px;
+    margin-left: 10px;
     border: none;
     border-radius: 5px;
     background-color: #1a73e8;
     color: white;
     font-weight: bold;
     cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+#go-button:hover, #fullscreen-button:hover {
+    background-color: #0c50b5;
 }
 
 #proxy-frame {
@@ -39,6 +47,7 @@ body {
     border: 1px solid #333;
     border-radius: 10px;
     margin-top: 10px;
+    background-color: #1e1e1e;
 }
 
 footer {
