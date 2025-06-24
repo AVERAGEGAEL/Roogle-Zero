@@ -8,6 +8,9 @@ document.getElementById("go-button").addEventListener("click", () => {
 
     const workerURL = "https://roogle-zero.uraverageopdoge.workers.dev/?url=" + encodeURIComponent(url);
     document.getElementById("proxy-frame").src = workerURL;
+
+    // Update browser URL bar (optional)
+    window.history.replaceState(null, "", "?url=" + encodeURIComponent(url));
 });
 
 // Fullscreen button
@@ -15,9 +18,9 @@ document.getElementById("fullscreen-button").addEventListener("click", () => {
     const iframe = document.getElementById("proxy-frame");
     if (iframe.requestFullscreen) {
         iframe.requestFullscreen();
-    } else if (iframe.webkitRequestFullscreen) { /* Safari */
+    } else if (iframe.webkitRequestFullscreen) {
         iframe.webkitRequestFullscreen();
-    } else if (iframe.msRequestFullscreen) { /* IE11 */
+    } else if (iframe.msRequestFullscreen) {
         iframe.msRequestFullscreen();
     }
 });
