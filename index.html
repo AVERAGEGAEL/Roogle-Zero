@@ -1,86 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Roogle Zero</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <title>Roogle Zero</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Roogle Zero 🌐</h1>
-        <p>Pure original proxy — fully custom built from scratch.</p>
+  <div class="container">
+    <h1>Roogle Zero 🌐</h1>
+    <p>Pure original proxy — fully custom built from scratch.</p>
 
-        <div class="input-section">
-            <input type="text" id="url-input" placeholder="Enter URL (e.g. google.com)">
-            <button id="go-button">Go</button>
-            <button id="fullscreen-button">Fullscreen</button>
-        </div>
-
-        <iframe id="proxy-frame" src="" frameborder="0" allowfullscreen></iframe>
-
-        <footer>
-            <p>Roogle Zero — powered by GitHub Pages + Cloudflare Workers</p>
-        </footer>
+    <div class="input-section">
+      <input type="text" id="url-input" placeholder="Enter URL (e.g. coolmathgames.com)">
+      <button id="go-button">Go</button>
+      <button id="fullscreen-button">Fullscreen</button>
     </div>
 
-    <script>
-        function normalize(url) {
-            url = url.trim();
-            if (!url.startsWith("http")) {
-                url = "https://" + url;
-            }
-            return url;
+    <iframe id="proxy-frame" src="" frameborder="0" allowfullscreen></iframe>
+
+    <footer>
+      <p>Roogle Zero — powered by GitHub Pages + Cloudflare Workers</p>
+    </footer>
+  </div>
+
+  <script>
+    function normalize(url) {
+      if (!url.includes("://")) url = "https://" + url;
+      return url;
+    }
+
+    function go() {
+      const input = document.getElementById("url-input");
+      const rawUrl = normalize(input.value.trim());
+      const proxied = "https://roogle-zero.uraverageopdoge.workers.dev/?url=" + encodeURIComponent(rawUrl);
+      const frame = document.getElementById("proxy-frame");
+      frame.src = proxied;
+
+      setTimeout(() => {
+        try {
+          const blocked = !frame.contentDocument || frame.contentWindow.location.href.includes("about:");
+          if (blocked) {
+            const confirmOpen = confirm("❗ Site refused iframe. Open in new tab?");
+            if (confirmOpen) window.open(proxied, "_blank"); // ✅ Always use proxied URL
+          }
+        } catch (e) {
+          window.open(proxied, "_blank"); // ✅ Even on cross-origin error, fallback
         }
+      }, 2500);
+    }
 
-        function go() {
-            const input = document.getElementById("url-input");
-            const frame = document.getElementById("proxy-frame");
-            const targetUrl = normalize(input.value);
-            const proxied = "https://roogle-zero.uraverageopdoge.workers.dev/?url=" + encodeURIComponent(targetUrl);
+    function fullscreen() {
+      const frame = document.getElementById("proxy-frame");
+      if (frame.requestFullscreen) frame.requestFullscreen();
+    }
 
-            frame.src = proxied;
+    document.getElementById("go-button").onclick = go;
+    document.getElementById("fullscreen-button").onclick = fullscreen;
+    document.getElementById("url-input").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") go();
+    });
 
-            // Detect iframe block
-            setTimeout(() => {
-                try {
-                    const failed = !frame.contentDocument || frame.contentWindow.location.href === "about:blank";
-                    if (failed) {
-                        if (confirm("❗ This site blocked iframe loading. Open in a new tab?")) {
-                            window.open(proxied, "_blank");
-                        }
-                    }
-                } catch (e) {
-                    if (confirm("❗ This site blocked iframe loading. Open in a new tab?")) {
-                        window.open(proxied, "_blank");
-                    }
-                }
-            }, 3000); // give more time to avoid false positives
-        }
-
-        function fullscreen() {
-            const frame = document.getElementById("proxy-frame");
-            if (frame.requestFullscreen) {
-                frame.requestFullscreen();
-            }
-        }
-
-        // Event listeners
-        document.getElementById("go-button").onclick = go;
-        document.getElementById("fullscreen-button").onclick = fullscreen;
-        document.getElementById("url-input").addEventListener("keydown", function(e) {
-            if (e.key === "Enter") {
-                go();
-            }
-        });
-
-        window.addEventListener("load", () => {
-            const q = new URLSearchParams(location.search).get("url");
-            if (q) {
-                document.getElementById("url-input").value = q;
-                go();
-            }
-        });
-    </script>
+    window.addEventListener("load", () => {
+      const q = new URLSearchParams(location.search).get("url");
+      if (q) {
+        document.getElementById("url-input").value = q;
+        go();
+      }
+    });
+  </script>
 </body>
 </html>
