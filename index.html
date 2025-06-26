@@ -24,6 +24,64 @@
         </footer>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        function normalize(url) {
+            url = url.trim();
+            if (!url.startsWith("http")) {
+                url = "https://" + url;
+            }
+            return url;
+        }
+
+        function go() {
+            const input = document.getElementById("url-input");
+            const frame = document.getElementById("proxy-frame");
+            const targetUrl = normalize(input.value);
+            const proxied = "https://roogle-zero.uraverageopdoge.workers.dev/?url=" + encodeURIComponent(targetUrl);
+
+            frame.src = proxied;
+
+            // Detect iframe failure and auto-fallback
+            setTimeout(() => {
+                try {
+                    const failed = !frame.contentDocument || frame.contentWindow.location.href === "about:blank";
+                    if (failed) {
+                        if (confirm("❗ This site blocked iframe loading. Open in a new tab?")) {
+                            window.open(proxied, "_blank");
+                        }
+                    }
+                } catch (e) {
+                    // Still blocked (cross-origin error), assume failure
+                    if (confirm("❗ This site blocked iframe loading. Open in a new tab?")) {
+                        window.open(proxied, "_blank");
+                    }
+                }
+            }, 1500);
+        }
+
+        function fullscreen() {
+            const frame = document.getElementById("proxy-frame");
+            if (frame.requestFullscreen) {
+                frame.requestFullscreen();
+            } else if (frame.webkitRequestFullscreen) {
+                frame.webkitRequestFullscreen();
+            } else if (frame.msRequestFullscreen) {
+                frame.msRequestFullscreen();
+            }
+        }
+
+        // Event listeners
+        document.getElementById("go-button").onclick = go;
+        document.getElementById("fullscreen-button").onclick = fullscreen;
+
+        // Auto-load if ?url= param is present
+        window.addEventListener("load", () => {
+            const q = new URLSearchParams(location.search).get("url");
+            if (q) {
+                document.getElementById("url-input").value = q;
+                go();
+            }
+        });
+    </script>
 </body>
 </html>
