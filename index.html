@@ -41,7 +41,7 @@
 
             frame.src = proxied;
 
-            // Detect iframe failure and auto-fallback
+            // Detect iframe block
             setTimeout(() => {
                 try {
                     const failed = !frame.contentDocument || frame.contentWindow.location.href === "about:blank";
@@ -51,30 +51,29 @@
                         }
                     }
                 } catch (e) {
-                    // Still blocked (cross-origin error), assume failure
                     if (confirm("❗ This site blocked iframe loading. Open in a new tab?")) {
                         window.open(proxied, "_blank");
                     }
                 }
-            }, 1500);
+            }, 3000); // give more time to avoid false positives
         }
 
         function fullscreen() {
             const frame = document.getElementById("proxy-frame");
             if (frame.requestFullscreen) {
                 frame.requestFullscreen();
-            } else if (frame.webkitRequestFullscreen) {
-                frame.webkitRequestFullscreen();
-            } else if (frame.msRequestFullscreen) {
-                frame.msRequestFullscreen();
             }
         }
 
         // Event listeners
         document.getElementById("go-button").onclick = go;
         document.getElementById("fullscreen-button").onclick = fullscreen;
+        document.getElementById("url-input").addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                go();
+            }
+        });
 
-        // Auto-load if ?url= param is present
         window.addEventListener("load", () => {
             const q = new URLSearchParams(location.search).get("url");
             if (q) {
