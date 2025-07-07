@@ -4,6 +4,7 @@ const fullscreenBtn = document.getElementById("fullscreen-button");
 const iframe = document.getElementById("proxy-frame");
 
 const WORKER_PREFIX = "https://roogle-zero.uraverageopdoge.workers.dev/?url=";
+const ALLOWLIST = ["wikipedia.org", "bing.com", "duckduckgo.com"];
 
 function sanitizeURL(raw) {
   if (!raw.startsWith("http://") && !raw.startsWith("https://")) {
@@ -26,18 +27,19 @@ function loadURL(rawUrl) {
   const final = proxyURL(clean);
   iframe.src = final;
 
-  // Run iframe detection after a short delay
+  const skipFallback = ALLOWLIST.some(domain => clean.includes(domain));
+
   setTimeout(() => {
     try {
       const test = iframe.contentWindow;
-      if (!test || iframe.clientHeight < 5 || iframe.contentDocument.body.innerHTML.length < 10) {
-        openInNewTab(final);
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!test || iframe.clientHeight < 10 || doc.body.innerHTML.length < 10) {
+        if (!skipFallback) openInNewTab(final);
       }
     } catch (err) {
-      // Cross-origin = likely iframe blocked
-      openInNewTab(final);
+      if (!skipFallback) openInNewTab(final);
     }
-  }, 1500);
+  }, 3000); // 3 seconds
 }
 
 function openInNewTab(proxyUrl) {
@@ -47,10 +49,6 @@ function openInNewTab(proxyUrl) {
 
 goBtn.onclick = () => loadURL(input.value);
 fullscreenBtn.onclick = () => iframe.requestFullscreen();
-
-// Pressing Enter submits
 input.addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    loadURL(input.value);
-  }
+  if (e.key === "Enter") loadURL(input.value);
 });
