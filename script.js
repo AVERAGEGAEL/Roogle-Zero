@@ -5,7 +5,7 @@ const iframe = document.getElementById("proxy-frame");
 
 const PROXY_BASE = "https://roogle-zero.uraverageopdoge.workers.dev/?url=";
 
-// Allowlist for known safe sites (avoid false iframe block)
+// Allowlist for safe sites
 const ALLOW_IFRAME = ["wikipedia.org", "wikimedia.org"];
 
 function isSafeSite(url) {
@@ -19,26 +19,24 @@ function getProxyUrl(url) {
 
 function loadUrl(url) {
   if (!url) return;
-  iframe.src = getProxyUrl(url);
+  const proxied = getProxyUrl(url);
+  iframe.src = proxied;
 
-  // Detect iframe block after 3s (only if not allowlisted)
   if (!isSafeSite(url)) {
-    setTimeout(() => {
+    // Use onload event for smarter iframe block detection
+    iframe.onload = () => {
       try {
         const doc = iframe.contentDocument;
         if (!doc) throw new Error("Blocked");
       } catch {
-        // Open in new proxied tab if iframe blocked
-        window.open(getProxyUrl(url), "_blank");
+        window.open(proxied, "_blank");
       }
-    }, 3000);
+    };
   }
 }
 
 // Go button
-goButton.addEventListener("click", () => {
-  loadUrl(urlInput.value.trim());
-});
+goButton.addEventListener("click", () => loadUrl(urlInput.value.trim()));
 
 // Enter key triggers Go
 urlInput.addEventListener("keydown", e => {
@@ -55,21 +53,25 @@ fullscreenButton.addEventListener("click", () => {
   else if (iframe.msRequestFullscreen) iframe.msRequestFullscreen();
 });
 
-// Intercept all links inside iframe for navigation
+// Intercept links inside iframe
 iframe.addEventListener("load", () => {
   try {
-    const iframeDoc = iframe.contentDocument;
-    if (!iframeDoc) return;
+    const doc = iframe.contentDocument;
+    if (!doc) return;
 
-    iframeDoc.querySelectorAll("a[href]").forEach(a => {
-      a.addEventListener("click", e => {
-        e.preventDefault();
-        const url = a.href;
-        loadUrl(url);
+    // Rewrite all links to go through proxy
+    const rewriteLinks = () => {
+      doc.querySelectorAll("a[href]").forEach(a => {
+        a.addEventListener("click", e => {
+          e.preventDefault();
+          loadUrl(a.href);
+        });
       });
-    });
+    };
 
-    // Also observe new links dynamically
+    rewriteLinks();
+
+    // Observe new links dynamically
     new MutationObserver(mutations => {
       for (const node of mutations.flatMap(x => Array.from(x.addedNodes))) {
         if (node.tagName === "A" && node.href) {
@@ -78,8 +80,13 @@ iframe.addEventListener("load", () => {
             loadUrl(node.href);
           });
         }
+        if (node.tagName === "IFRAME" && node.src) {
+          // Rewrite any iframe src for Poki games or other sites
+          node.src = getProxyUrl(node.src);
+          node.removeAttribute("sandbox");
+        }
       }
-    }).observe(iframeDoc, { childList: true, subtree: true });
+    }).observe(doc, { childList: true, subtree: true });
 
   } catch {}
 });
